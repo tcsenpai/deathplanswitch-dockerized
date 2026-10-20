@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased (deathplanswitch-dockerized fork)
+
+- Docker image and `compose.yaml`: Apache and PHP 8.3 in one container, data on a `/data` volume outside the web root, and a built-in scheduler loop in place of cron (`DPS_TICK_INTERVAL`, default 300 seconds).
+
 ## 1.0.0, October 2026
 
 First public release.

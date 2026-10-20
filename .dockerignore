@@ -1,0 +1,7 @@
+.git
+.mycelium
+.claude
+graft
+data/*
+!data/index.html
+config.local.php

@@ -2,7 +2,9 @@
 
 **If you disappear, the right people are told.**
 
-This project is open source but doesn't accept pull requests. Fork it freely.
+> **This is `deathplanswitch-dockerized`, an unofficial fork** of [Death Plan Switch](https://github.com/Romeo19361/deathplanswitch) by [Tecky](https://tecky.au), used under the MIT licence. It adds a Docker image and Docker Compose setup with a built-in scheduler; see [Docker](#docker). The app itself is unchanged. Report Docker problems here, not upstream.
+
+The original project is open source but doesn't accept pull requests. Fork it freely.
 
 Death Plan Switch is a small, self-hosted dead man's switch for solo web professionals. Once a week it emails you a link. You open it and press a button. If you stop, it asks your next of kin whether everything is all right, and if nobody can say that it is, it emails the people who need to act: the person who would look after your clients, and anyone else you choose.
 
@@ -65,6 +67,32 @@ The line looks like this:
 It must run as the same user as the web pages, because both write to the `data` folder. If it runs as anyone else, `cron.php` stops and says so instead of quietly breaking file permissions.
 
 No cron on your hosting? Settings shows a secret web address that does the same job. Point any outside scheduler at it.
+
+## Docker
+
+This fork ships a self-contained image: Apache, PHP 8.3 and the scheduler in one container. No crontab is needed.
+
+```
+git clone https://github.com/tcsenpai/deathplanswitch-dockerized.git
+cd deathplanswitch-dockerized
+docker compose up -d --build
+```
+
+It listens on `127.0.0.1:8080`. **Put an HTTPS reverse proxy in front of it** (Caddy, Traefik, nginx) and open your public address to run the installer. The proxy must send `X-Forwarded-Proto: https`, which all three do by default, so the app marks its cookies secure and builds `https://` links.
+
+How it differs from a normal install:
+
+- **The data folder is the `/data` volume**, outside the web root, so it has no web address at all. The installer reports it as "Outside the web folder". Apache also refuses `app/`, `cli/`, `tests/`, `docs/`, dotfiles and `.json`/`.md` files, as the nginx example does.
+- **The scheduler runs inside the container** every `DPS_TICK_INTERVAL` seconds (300 by default) as `www-data`. Ignore the crontab line the installer shows; the first run arrives within that interval. The health address still matters: point an uptime monitor at it, because a stopped container stops the switch.
+- **Backups:** back up the `dps-data` volume. **Updating:** `git pull && docker compose up -d --build`. The volume is kept.
+
+Command-line tools run as `www-data` inside the container:
+
+```
+docker compose exec -u www-data switch php cli/status.php
+docker compose exec -u www-data switch php cli/reset-password.php
+docker compose exec -u www-data switch php tests/timeshift.php 24 --run
+```
 
 ## Set up
 
@@ -183,4 +211,4 @@ MIT. See [LICENSE](LICENSE). The software is provided "as is", without warranty 
 
 Death Plan Switch bundles [PHPMailer](https://github.com/PHPMailer/PHPMailer) 7.1.1 in `app/lib/PHPMailer`, unmodified, under the LGPL 2.1. Its licence is in that folder.
 
-Made by [Tecky](https://tecky.au).
+Made by [Tecky](https://tecky.au). Docker packaging in this fork by [tcsenpai](https://github.com/tcsenpai); all credit for Death Plan Switch itself goes to the original author.

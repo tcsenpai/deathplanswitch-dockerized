@@ -1,0 +1,16 @@
+services:
+  switch:
+    build: .
+    image: deathplanswitch:latest
+    restart: unless-stopped
+    ports:
+      # Put an HTTPS reverse proxy (Caddy, Traefik, nginx) in front of this.
+      - "127.0.0.1:8080:80"
+    environment:
+      # Seconds between scheduler runs.
+      DPS_TICK_INTERVAL: "300"
+    volumes:
+      - dps-data:/data
+
+volumes:
+  dps-data:
